@@ -8,7 +8,15 @@ ip-api.com = 208.95.112.1
 [Panel]
 Network-info = script-name=网络信息, title="", content="", style=info, update-interval=1
 Restriction-check = script-name=流媒体解锁检测, title="", content="", update-interval=1800
+telecom = script-name=电信流量信息, title="", content="", update-interval=3600
 
 [Script]
 网络信息 = type=generic, script-path=https://raw.githubusercontent.com/chiupam/surge/main/scripts/javascripts/panel/network_info.js, type=generic, timeout=30
 流媒体解锁检测 = type=generic, script-path=https://raw.githubusercontent.com/chiupam/surge/main/scripts/javascripts/panel/restriction_check.js, type=generic, timeout=30
+#电信流量信息
+#先网页打开 e.189.cn 登陆一下
+#再访问 https://e.189.cn/store/user/package_detail.do
+电信流量信息 = type=http-request, script-path=https://raw.githubusercontent.com/mieqq/mieqq/master/telecom.js, pattern=https://e.189.cn/store/user/package_detail.do, requires-body=1, max-size=0, timeout=30
+
+[MITM]
+hostname = %APPEND% e.189.cn:443
