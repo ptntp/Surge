@@ -187,6 +187,36 @@
       ]
     },
     {
+      "id": "Procuratorate",
+      "name": "工作打卡",
+      "key": [],
+      "descs_html": [
+        "打开打卡小程序后并请进行一次工作打卡"
+      ],
+      "settings": [
+        {
+          "id": "procuratorate_cookie",
+          "name": "签到cookie",
+          "val": "",
+          "type": "text",
+          "desc": ""
+        },
+        {
+          "id": "procuratorate_body",
+          "name": "签到body",
+          "val": "",
+          "type": "textarea",
+          "desc": ""
+        }
+      ],
+      "author": "@chiupam",
+      "repo": "https://github.com/chiupam/surge",
+      "icons": [
+        "https://raw.githubusercontent.com/chiupam/surge/main/boxjs/icon/Procuratorate.png",
+        "https://raw.githubusercontent.com/chiupam/surge/main/boxjs/icon/Procuratorate.png"
+      ]
+    },
+    {
       "id": "qndxx",
       "name": "青年大学习",
       "key": [],
