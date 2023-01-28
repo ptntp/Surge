@@ -54,12 +54,16 @@ function start() {
 }
 
 async function main() {
-  if (hours == 8 && minutes == 58) {
-    await index()
-  } else if (hours == 17 && minutes == 1) {
-    await index()
+  if ($.read(`procuratorate_cookie`)) {
+    if (hours == 8 && minutes == 58) {
+      await index()
+    } else if (hours == 17 && minutes == 1) {
+      await index()
+    } else {
+      $.log(`不在打卡时间（精确到分钟）`)
+    }
   } else {
-    $.log(`不在打卡时间（精确到分钟）`)
+    $.notice($.name, `⭕ 首次使用请手动打卡 ⭕`, ``, ``)
   }
   $.done()
 }
