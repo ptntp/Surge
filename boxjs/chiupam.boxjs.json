@@ -157,41 +157,11 @@
       ]
     },
     {
-      "id": "Location",
-      "name": "定位签到",
-      "key": [],
-      "descs_html": [
-        "<h4 align=\"center\">打开 <a href='http://yibandw.kmmu.edu.cn'>http://yibandw.kmmu.edu.cn</a> 并登录</h4>"
-      ],
-      "settings": [
-        {
-          "id": "location",
-          "name": "签到数据包",
-          "val": "",
-          "type": "textarea",
-          "desc": ""
-        },
-        {
-          "id": "location_api_open",
-          "name": "快捷签到开关",
-          "val": false,
-          "type": "boolean",
-          "desc": "开启则表示使用快捷方式签到,关闭则以下设置不生效"
-        }
-      ],
-      "author": "@chiupam",
-      "repo": "https://github.com/chiupam/surge",
-      "icons": [
-        "https://raw.githubusercontent.com/chiupam/surge/main/boxjs/icon/Location.png",
-        "https://raw.githubusercontent.com/chiupam/surge/main/boxjs/icon/Location.png"
-      ]
-    },
-    {
       "id": "Procuratorate",
       "name": "工作打卡",
       "key": [],
       "descs_html": [
-        "打开打卡小程序后并请进行一次工作打卡"
+        "<h4 align=\"center\">打开工作打卡的小程序手动进行一次打卡./h4>"
       ],
       "settings": [
         {
