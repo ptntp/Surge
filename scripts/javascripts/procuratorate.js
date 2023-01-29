@@ -90,7 +90,7 @@ function index() {
       if (data) {
         $.log(data)
         data = $.toObj(data)
-        if (data.success == `true`) {
+        if (data.success) {
           $.notice($.name, `✅ 打卡成功 ✅`, data.message, ``)
         } else {
           $.notice($.name, `❌ 打卡失败 ❌`, data, ``)
