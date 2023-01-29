@@ -13,36 +13,29 @@
  * requires-body: 1 | true
  *
  * type: cron
- * cron: 1 58 8 * * 1,2,3,4,5
+ * cron: 1 55 8 * * *
  * script-path: https://raw.githubusercontent.com/chiupam/surge/main/scripts/javascripts/procuratorate.js
  *
  * type: cron
- * cron: 1 1 17 * * 1,2,3,4,5
+ * cron: 1 1 17 * * *
  * script-path: https://raw.githubusercontent.com/chiupam/surge/main/scripts/javascripts/procuratorate.js
 
  * =============== Surge ===============
  * 工作打卡Cookie = type=http-request, pattern=^https?://zhcj\.kmcgjcy\.cn/AttendanceCard/SaveAttCheckinout$, requires-body=1, max-size=-1, script-path=https://raw.githubusercontent.com/chiupam/surge/main/scripts/javascripts/procuratorate.js, script-update-interval=0, timeout=10
- * 上班打卡 = type=cron, cronexp="1 58 8 * * 1,2,3,4,5", wake-system=1, script-path=https://raw.githubusercontent.com/chiupam/surge/main/scripts/javascripts/procuratorate.js, script-update-interval=0, timeout=10
- * 下班打卡 = type=cron, cronexp="1 1 17 * * 1,2,3,4,5", wake-system=1, script-path=https://raw.githubusercontent.com/chiupam/surge/main/scripts/javascripts/procuratorate.js, script-update-interval=0, timeout=10
+ * 上班打卡 = type=cron, cronexp="1 55 8 * * *", wake-system=1, script-path=https://raw.githubusercontent.com/chiupam/surge/main/scripts/javascripts/procuratorate.js, script-update-interval=0, timeout=10
+ * 下班打卡 = type=cron, cronexp="1 1 17 * * *", wake-system=1, script-path=https://raw.githubusercontent.com/chiupam/surge/main/scripts/javascripts/procuratorate.js, script-update-interval=0, timeout=10
  *
  */
-
 
 const time = new Date()
 const years = time.getFullYear().toString()
 const month = (`0` + time.getMonth() + 1).slice(-2)
 const day = (`0` + time.getDate()).slice(-2)
-const today = years + month + day
-const hours = time.getHours()
-const minutes = time.getMinutes()
-if (hours == 8) {
-  period = `上班打卡`
-} else if (hours == 17) {
-  period = `下班打卡`
-} else {
-  period = `打卡测试`
-}
-const $ = new Env(period)
+const hours = (`0` + time.getHours()).slice(-2)
+const minutes = (`0` + time.getMinutes()).slice(-2)
+const latitude = Math.floor(Math.random() * 1000)
+const longitude = Math.floor(Math.random() * 10000)
+const $ = new Env(`🧑‍💼 工作打卡`)
 
 typeof $request !== `undefined` ? start() : main()
 
@@ -59,15 +52,24 @@ function start() {
 
 async function main() {
   if ($.read(`procuratorate_cookie`)) {
-    work = await check(today)
-    if (work == `0`) {
-      if (hours == 8 && minutes == 58) {
-        await index()
-      } else if (hours == 17 && minutes == 1) {
-        await index()
+    if (await work()) {
+      $.log(`✅ 当天是工作日, 开始打卡`)
+      lists = await index()
+      if (lists == 0 && `08:25` <= `${hours}:${minutes}` <= `09:00`) {
+        await signin(latitude, longitude, `上班打卡`)
+      } else if (lists == 0 && `09:00` < `${hours}:${minutes}` < `17:00`) {
+        $.notice($.name, `⭕ 迟到补卡 ⭕`, `请自行进行迟到补卡`, ``)
+      } else if (lists == 1 && `08:25` <= `${hours}:${minutes}` <= `09:00`) {
+        $.notice($.name, `⭕ 上班已打卡 ⭕`, `请勿再次打卡, 否则按早退处理`, ``)
+      } else if (lists == 1 && `17:00` <= `${hours}:${minutes}`) {
+        await signin(latitude, longitude, `下班打卡`)
+      } else if (lists == 2) {
+        $.log(`✅ 今天已经全部打卡`)
       } else {
-        $.log(`不在打卡时间（精确到分钟）`)
+        $.notice($.name, `⭕ 打卡出错 ⭕`, `请自行检查运行日志, 未知错误无法打卡`, ``)
       }
+    } else {
+      $.log(`⭕ 当天是休息日, 禁止打卡`)
     }
   } else {
     $.notice($.name, `⭕ 首次使用请手动打卡 ⭕`, ``, ``)
@@ -75,33 +77,44 @@ async function main() {
   $.done()
 }
 
-function check(_date) {
+function work() {
+  let date = years + month + day
   return new Promise(resolve => {
-    const options = {
-      url: `http://tool.bitefu.net/jiari/?d=` + _date
-    }
+    const options = {url: `http://tool.bitefu.net/jiari/?d=${date}`}
     $.log(`🧑‍💻 开始检查当日是否为工作日...`)
     $.get(options, (error, response, data) => {
       if (data) {
-        if (data == `0`) {
-          $.log(`✅ 当天为工作日，开始打卡`)
-        } else {
-          $.log(`⭕ 当天为休息日，不进行打卡`)
-        } 
+        data == `0` ? result = true : result = false
       }
-      resolve(data)
+      resolve(result)
     })
   })
 }
 
 function index() {
-  let checkin = $.toObj($.read(`procuratorate_body`))
-  let lng_substr = checkin.model.lng.substr(-4)
-  let lat_substr = checkin.model.lat.substr(-3)
-  let lng_random = Math.floor(Math.random() * 10000)
-  let lat_random = Math.floor(Math.random() * 1000)
-  checkin.model.lng = checkin.model.lng.replace(lng_substr, lng_random)
-  checkin.model.lat = checkin.model.lat.replace(lat_substr, lat_random)
+  let data = $.toObj($.read(`procuratorate_body`))
+  let userid = data.model.userID
+  let UnitCode = data.model.UnitCode
+  return new Promise(resolve => {
+    const options = {
+      url: `https://zhcj.kmcgjcy.cn/AttendanceCard/GetAttCheckinoutList?UnitCode=${UnitCode}&userid=${userid}`,
+      headers: {"Cookie": $.read(`procuratorate_cookie`)}
+    }
+    $.log(`🧑‍💻 开始检查打卡情况...`)
+    $.post(options, (error, response, data) => {
+      if (data) {
+        resolve(data.length)
+      }
+    })
+  })
+}
+
+function signin(_lat, _lng, _period) {
+  let data = $.toObj($.read(`procuratorate_body`))
+  let lng_substr = data.model.lng.substr(-4)
+  let lat_substr = data.model.lat.substr(-3)
+  data.model.lng = data.model.lng.replace(lng_substr, _lng)
+  data.model.lat = data.model.lat.replace(lat_substr, _lat)
   return new Promise(resolve => {
     const options = {
       url: `https://zhcj.kmcgjcy.cn/AttendanceCard/SaveAttCheckinout`,
@@ -109,17 +122,16 @@ function index() {
         "Cookie": $.read(`procuratorate_cookie`),
         "Accept": `application/json`
       },
-      body: checkin
+      body: data
     }
-    $.log(`🧑‍💻 开始${$.name}...`)
+    $.log(`🧑‍💻 开始${_period}...`)
     $.post(options, (error, response, data) => {
       if (data) {
-        $.log(data)
         data = $.toObj(data)
         if (data.success) {
-          $.notice($.name, `✅ 打卡成功 ✅`, data.message, ``)
+          $.notice($.name, `✅ 打卡成功 ✅`, `💻 返回数据：${data.message}`, ``)
         } else {
-          $.notice($.name, `❌ 打卡失败 ❌`, data, ``)
+          $.notice($.name, `❌ 打卡失败 ❌`, `💻 返回的完整数据：${$.toStr(data)}`, ``)
         }
       }
       resolve()
