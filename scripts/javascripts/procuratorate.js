@@ -55,8 +55,10 @@ async function main() {
     if (await work()) {
       $.log(`✅ 当天是工作日, 开始打卡`)
       lists = await index()
-      if (lists == 0 && `08:25` <= `${hours}:${minutes}` <= `09:00`) {
+      if (lists == 0 && `08:50` <= `${hours}:${minutes}` <= `09:00`) {
         await signin(latitude, longitude, `上班打卡`)
+      } else if (lists == 0 && `${hours}:${minutes}` < `08:50`) {
+        $.notice($.name, `⭕ 未到打卡时间 ⭕`, `打卡暂未开始`, ``)
       } else if (lists == 0 && `09:00` < `${hours}:${minutes}` < `17:00`) {
         $.notice($.name, `⭕ 迟到补卡 ⭕`, `请自行进行迟到补卡`, ``)
       } else if (lists == 1 && `08:25` <= `${hours}:${minutes}` <= `09:00`) {
@@ -103,7 +105,7 @@ function index() {
     $.log(`🧑‍💻 开始检查打卡情况...`)
     $.post(options, (error, response, data) => {
       if (data) {
-        resolve(data.length)
+        resolve($.toObj(data).length)
       }
     })
   })
