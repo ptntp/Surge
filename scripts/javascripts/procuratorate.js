@@ -29,6 +29,10 @@
 
 
 const time = new Date()
+const years = time.getFullYear().toString()
+const month = (`0` + time.getMonth() + 1).slice(-2)
+const day = (`0` + time.getDate()).slice(-2)
+const today = years + month + day
 const hours = time.getHours()
 const minutes = time.getMinutes()
 if (hours == 8) {
@@ -55,17 +59,39 @@ function start() {
 
 async function main() {
   if ($.read(`procuratorate_cookie`)) {
-    if (hours == 8 && minutes == 58) {
-      await index()
-    } else if (hours == 17 && minutes == 1) {
-      await index()
-    } else {
-      $.log(`不在打卡时间（精确到分钟）`)
+    work = await check(today)
+    if (work == `0`) {
+      if (hours == 8 && minutes == 58) {
+        await index()
+      } else if (hours == 17 && minutes == 1) {
+        await index()
+      } else {
+        $.log(`不在打卡时间（精确到分钟）`)
+      }
     }
   } else {
     $.notice($.name, `⭕ 首次使用请手动打卡 ⭕`, ``, ``)
   }
   $.done()
+}
+
+function check(_date) {
+  return new Promise(resolve => {
+    const options = {
+      url: `http://tool.bitefu.net/jiari/?d=` + _date
+    }
+    $.log(`🧑‍💻 开始检查当日是否为工作日...`)
+    $.get(options, (error, response, data) => {
+      if (data) {
+        if (data == `0`) {
+          $.log(`✅ 当天为工作日，开始打卡`)
+        } else {
+          $.log(`⭕ 当天为休息日，不进行打卡`)
+        } 
+      }
+      resolve(data)
+    })
+  })
 }
 
 function index() {
@@ -118,6 +144,10 @@ function Env(name) {
     if (SG) $notification.post(title, subtitle, message, { url: url })
     if (QX) $notify(title, subtitle, message, { "open-url": url })
   }
+  get = (url, cb) => {
+    if (LN || SG) {$httpClient.get(url, cb)}
+    if (QX) {url.method = `GET`; $task.fetch(url).then((resp) => cb(null, {}, resp.body))}
+  }
   post = (url, cb) => {
     if (LN || SG) {$httpClient.post(url, cb)}
     if (QX) {url.method = 'POST'; $task.fetch(url).then((resp) => cb(null, {}, resp.body))}
@@ -126,5 +156,5 @@ function Env(name) {
   toStr = (obj) => JSON.stringify(obj)
   log = (message) => console.log(message)
   done = (value = {}) => {$done(value)}
-  return { name, read, write, notice, post, toObj, toStr, log, done }
+  return { name, read, write, notice, get, post, toObj, toStr, log, done }
 }
